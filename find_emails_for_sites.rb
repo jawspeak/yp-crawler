@@ -4,40 +4,57 @@ require 'mechanize'
 require 'csv'
 require 'cgi'
 
-class EmailsForSites
-  def initialize(filename)
+class FindEmailsForSites
+  def initialize
+    @agent = Mechanize.new
+    @found_in, @searched_in = 0, 0
+    @emails_found = {}
+  end
+
+  # standalone entrypoint for getting all the results in the existing csv  search.rb
+  def spider_csv_results(filename)
     data = CSV.read filename
     i = data.shift.index "website"
     @websites  = data.each.map{|e| e[i].strip if e[i] != nil && e[i].strip.length > 0 }.reject{ |e| e==nil}
     @outfile = "results_emails.csv"
     puts "will search #{@websites.length} websites"
-    @agent = Mechanize.new
-    @found, @searched = 0, 0
-    @emails_found = {}
-  end
-
-  def run
-    CSV.open(@outfile, 'w') {|csv| csv << %w(website, link_text1, email1, email2, etc)}
+    CSV.open(@outfile, 'w') {|csv| csv << %w(website email1 email2 email3 email4)}
     @websites.each do |website|
-      root_page = safely{@agent.get(website)}
-      next if root_page == nil
-      found_email = false
-      find_candidate_pages(root_page).each do |page|
-        found_email = true if spider(page)
-      end      
-      @found += 1 if found_email
-      @searched += 1
-      puts "\tfound emails in #{@found} of #{@searched} websites: #{(@found.to_f/@searched * 100).round}%"
+      all_pages_found = spider_site(website)
+      if !all_pages_found.empty?
+        @found_in += 1
+        all_pages_found.each {|p| save(p)}
+      end
+      @searched_in += 1
+      puts "\tfound emails in #{@found_in} of #{@searched_in} websites: #{(@found_in.to_f/@searched_in * 100).round}%"
     end
   end
 
+  # find results for one url, used while creating one csv with everything in search.rb 
+  # (this does omit the page we found the search on)
+  def spider_site_for_emails(website)
+    spider_site(website).values.flatten
+  end
+
   private
-  def spider(page)
+
+  def spider_site(website)
+    all_pages_found = {}
+    return all_pages_found if website == nil || website.empty?
+    root_page = safely{@agent.get(website)}
+    return all_pages_found if root_page == nil
+    find_candidate_pages(root_page).each do |page|
+      spider(page, all_pages_found)
+    end
+    all_pages_found
+  end
+ 
+  def spider(page, all_pages_found)
     safely do
-      puts "searching #{page.uri}"
-      links = find_emails(page)
-      if links.length > 0
-        save(page.uri.to_s, links)
+      puts " [email finder] #{page.uri}"
+      email_links = find_emails(page)
+      if email_links.length > 0
+        all_pages_found[page.uri.to_s] = email_links
       end
     end
   end
@@ -46,7 +63,15 @@ class EmailsForSites
     begin
       yield
     rescue Exception => e
-      puts "Error: #{e}. Continuing."
+      if e.message =~ /connection was aborted/
+        begin
+          yield 
+        rescue Exception => e
+          puts "Error on retry: #{e}. Continuing."
+        end
+      else
+        puts "Error: #{e}. Continuing."
+      end
     end
   end
 
@@ -71,7 +96,8 @@ class EmailsForSites
     found
   end
 
-  def save(url, emails)
+  def save(pair)
+    url, emails = pair
     CSV.open(@outfile, 'a') do |csv|
       csv << [url] + emails
     end
@@ -79,5 +105,5 @@ class EmailsForSites
 end
 
 if __FILE__ == $0
-  EmailsForSites.new('results.csv').run
+  FindEmailsForSites.new.spider_csv_results('results.csv')
 end
