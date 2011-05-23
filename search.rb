@@ -17,7 +17,7 @@ class Search
 
   def run
     puts "[yp searcher] Extracting data, saving to " + @filename
-    CSV.open(@filename, 'w') {|f| f << %w(state_searched_with first_search_term company_name neighborhood address locality zip state phone website category1 category2 category3 category4 email1 email2 email3 email4) }
+    CSV.open(@filename, 'w') {|f| f << %w(state_searched_with first_search_term company_name address locality zip state phone website where1 where2 where3 category1 category2 category3 email1 email2 email3 email4) }
     @states.each do |state|
       agent = Mechanize.new
       already_saved = {}
@@ -47,27 +47,33 @@ class Search
       address = l.search('.street-address').text.strip
       key = "#{company_name}_#{address}"
       next if already_saved.key?(key)
-      neighborhood = l.search('.business-neighborhoods').text.strip.gsub(/[\r\n]+/,'')
-      categories = categories_or_default(l)
       locality = l.search('.locality').text.strip
       zip = l.search('.postal-code').text.strip
       state = l.search('.region').text.strip
       phone = l.search('.business-phone').text.strip
+      categories = categories_or_default(l)
+      business_neighborhoods = neighborhoods_or_default(l)
       website = extract_website(l)
       emails = @email_finder.spider_site_for_emails(website)
       CSV.open(@filename, 'a') do |csv|
-        csv << [state_searched_with, first_search_term, company_name, neighborhood, address, locality, zip, state, phone, website] + categories + emails
+        csv << [state_searched_with, first_search_term, company_name,
+                address, locality, zip, state, phone, website] + business_neighborhoods + categories + emails
       end
       already_saved[key] = true
-      # in the future we could extract the "where" and "what" keywords in the listings
     end
   end
 
   private 
   def categories_or_default(listing_node)
     catgs = listing_node.search('.business-categories').text.strip.gsub(/[\r\n]+/,'').split(',')
-    catgs[3] = nil
-    catgs.slice(0, 4)
+    catgs[4] = nil
+    catgs.slice(0, 3)
+  end
+
+  def neighborhoods_or_default(listing_node)
+    where = listing_node.search('.business-neighborhoods').text.strip.gsub(/[\r\n]+/,'').split(',')
+    where[4] = nil
+    where.slice(0, 3)
   end
 
   def extract_website(listing_node)

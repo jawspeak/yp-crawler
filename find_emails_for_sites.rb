@@ -32,11 +32,11 @@ class FindEmailsForSites
 
   # find results for one url, used while creating one csv with everything in search.rb 
   # (this does omit the page we found the search on)
-  # returns a max of 3
+  # returns a max of 4
   def spider_site_for_emails(website)
     emails = spider_site(website).values.flatten
-    emails[4] = nil
-    emails.slice(0, 3)
+    emails[5] = nil
+    emails.slice(0, 4)
   end
 
   private
