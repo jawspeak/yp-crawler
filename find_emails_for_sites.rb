@@ -32,8 +32,11 @@ class FindEmailsForSites
 
   # find results for one url, used while creating one csv with everything in search.rb 
   # (this does omit the page we found the search on)
+  # returns a max of 3
   def spider_site_for_emails(website)
-    spider_site(website).values.flatten
+    emails = spider_site(website).values.flatten
+    emails[4] = nil
+    emails.slice(0, 3)
   end
 
   private
@@ -51,7 +54,7 @@ class FindEmailsForSites
  
   def spider(page, all_pages_found)
     safely do
-      puts " [email finder] #{page.uri}"
+      puts " [email finder searching] #{page.uri}"
       email_links = find_emails(page)
       if email_links.length > 0
         all_pages_found[page.uri.to_s] = email_links
@@ -59,6 +62,7 @@ class FindEmailsForSites
     end
   end
 
+  # TODO extract into a module and mix in
   def safely(&block)
     begin
       yield
