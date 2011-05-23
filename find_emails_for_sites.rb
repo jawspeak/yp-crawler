@@ -17,7 +17,7 @@ class FindEmailsForSites
     i = data.shift.index "website"
     @websites  = data.each.map{|e| e[i].strip if e[i] != nil && e[i].strip.length > 0 }.reject{ |e| e==nil}
     @outfile = "results_emails.csv"
-    puts "will search #{@websites.length} websites"
+    puts "[email finder] will search #{@websites.length} websites"
     CSV.open(@outfile, 'w') {|csv| csv << %w(website email1 email2 email3 email4)}
     @websites.each do |website|
       all_pages_found = spider_site(website)
@@ -26,7 +26,7 @@ class FindEmailsForSites
         all_pages_found.each {|p| save(p)}
       end
       @searched_in += 1
-      puts "\tfound emails in #{@found_in} of #{@searched_in} websites: #{(@found_in.to_f/@searched_in * 100).round}%"
+      puts "  [email finder] found emails in #{@found_in} of #{@searched_in} websites: #{(@found_in.to_f/@searched_in * 100).round}%"
     end
   end
 
@@ -54,7 +54,7 @@ class FindEmailsForSites
  
   def spider(page, all_pages_found)
     safely do
-      puts " [email finder searching] #{page.uri}"
+#      puts "  [email finder searching] #{page.uri}"
       email_links = find_emails(page)
       if email_links.length > 0
         all_pages_found[page.uri.to_s] = email_links
