@@ -1,0 +1,33 @@
+use logger with timestamps
+
+
+be more resilient with errors:
+
+[yp searcher] Extracting IN Yacht+Club page=3
+[yp searcher] Extracting IN Yacht+Club page=4
+[yp searcher] Extracting IA Marina page=2
+  [email finder] Error on retry: An established connection was aborted by the software in your host machine.. Continuing.
+[yp searcher] Extracting IA Boat+Dock page=2
+[yp searcher] Extracting IA Boat+Dock page=3
+ [email finder] Error: 404 => Net::HTTPNotFound. Continuing.
+[yp searcher] Extracting IA Yacht+Club page=2
+ [email finder] Error: getaddrinfo: No such host is known. . Continuing.
+ [email finder] Error: 404 => Net::HTTPNotFound. Continuing.
+ [email finder] Error: 404 => Net::HTTPNotFound. Continuing.
+ [email finder] Error: getaddrinfo: No such host is known. . Continuing.
+[yp searcher] Extracting KS Boat+Dock page=2
+[yp searcher] Extracting KS Boat+Dock page=3
+ [email finder] Error: Mechanize::UnsupportedSchemeError. Continuing.
+ [email finder] Error: 404 => Net::HTTPNotFound. Continuing.
+[yp searcher] Extracting KS Boat+Dock page=4
+ [email finder] Error: 404 => Net::HTTPNotFound. Continuing.
+ [email finder] Error: Mechanize::UnsupportedSchemeError. Continuing.
+[yp searcher] Extracting KY Marina page=2
+ [yp searcher] Error on retry: An established connection was aborted by the software in your host machine.. Continuing.
+ [yp searcher] Error: getaddrinfo: No such host is known. . Continuing.
+ [yp searcher] Error: getaddrinfo: No such host is known. . Continuing.
+ [yp searcher] Error: getaddrinfo: No such host is known. . Continuing.
+ [yp searcher] Error: getaddrinfo: No such host is known. . Continuing.
+ [yp searcher] Error: getaddrinfo: No such host is known. . Continuing.
+ [yp searcher] Error: getaddrinfo: No such host is known. . Continuing.
+ [yp searcher] Error: getaddrinfo: No such host is known. . Continuing.

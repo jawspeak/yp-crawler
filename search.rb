@@ -9,8 +9,7 @@ class Search
 
   def initialize(filename)
     @terms = %w(Dock+Builders Marina Boat+Dock Dock+Pilings Marine+Contractor Yacht+Club Boat+Lift)
-#    @states = %w(AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY)
-    @states = %w(AL AK AZ AR CA CO CT DE DC GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY)
+    @states = %w(AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY)
 #    @states = %w(FL)
     @filename = filename
     @email_finder = FindEmailsForSites.new
@@ -95,10 +94,10 @@ class Search
         begin
           yield 
         rescue Exception => e
-          puts "Error on retry: #{e}. Continuing."
+          puts " [yp searcher] Error on retry: #{e}. Continuing."
         end
       else
-        puts "Error: #{e}. Continuing."
+        puts " [yp searcher] Error: #{e}. Continuing."
       end
     end
   end

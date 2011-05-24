@@ -55,8 +55,8 @@ class FindEmailsForSites
   def spider(page, all_pages_found)
     safely do
 #      puts "  [email finder searching] #{page.uri}"
-      email_links = find_emails(page)
-      if email_links.length > 0
+      email_links = safely{find_emails(page)}
+      if email_links && email_links.length > 0
         all_pages_found[page.uri.to_s] = email_links
       end
     end
@@ -71,10 +71,10 @@ class FindEmailsForSites
         begin
           yield 
         rescue Exception => e
-          puts "Error on retry: #{e}. Continuing."
+          puts " [email finder] Error on retry: #{e}. Continuing."
         end
       else
-        puts "Error: #{e}. Continuing."
+        puts " [email finder] Error: #{e}. Continuing."
       end
     end
   end
@@ -82,9 +82,11 @@ class FindEmailsForSites
   LINKS_TO_CRAWL = /(contact)|(about)/i
   def find_candidate_pages(page) 
     pages = {}
-    page.links.find_all{|l|l.text.match(LINKS_TO_CRAWL)}.each do |found|
-      pages[found.uri.to_s] = found # remove dup links
+    links = (safely{page.links.find_all{|l|l.text.match(LINKS_TO_CRAWL)}} || [])
+    links.each do |found|
+      pages[safely{found.uri.to_s}] = found # remove dup links
     end
+    pages.reject!{|k| k==nil} # reject if safely failed and has nil key
     to_crawl = [page]
     pages.values.each do |found|
       p = safely{@agent.click(found)}
