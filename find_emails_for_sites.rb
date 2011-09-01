@@ -1,18 +1,21 @@
+
 #!/usr/bin/env ruby
 
 require 'mechanize'
 require 'csv'
 require 'cgi'
+require 'logger'
 
 class FindEmailsForSites
   def initialize
-    @agent = Mechanize.new
     @found_in, @searched_in = 0, 0
     @emails_found = {}
   end
 
   # standalone entrypoint for getting all the results in the existing csv  search.rb
   def spider_csv_results(filename)
+    # build each time as it seems to time out?
+    @agent = Mechanize.new {|a| a.log = Logger.new('mechanize_spider.log')}
     data = CSV.read filename
     i = data.shift.index "website"
     @websites  = data.each.map{|e| e[i].strip if e[i] != nil && e[i].strip.length > 0 }.reject{ |e| e==nil}
@@ -34,6 +37,8 @@ class FindEmailsForSites
   # (this does omit the page we found the search on)
   # returns a max of 4
   def spider_site_for_emails(website)
+    @agent = Mechanize.new {|a| a.log = Logger.new('mechanize_spider.log')}
+    puts "  [email finder] will spider #{website}"
     emails = spider_site(website).values.flatten
     emails[5] = nil
     emails.slice(0, 4)
@@ -68,13 +73,7 @@ class FindEmailsForSites
       yield
     rescue Exception => e
       if e.message =~ /connection was aborted/
-        begin
-          yield 
-        rescue Exception => e
-          puts " [email finder] Error on retry: #{e}. Continuing."
-        end
-      else
-        puts " [email finder] Error: #{e}. Continuing."
+        puts "  [email finder] Error: #{e} #{e.message}. Continuing."
       end
     end
   end

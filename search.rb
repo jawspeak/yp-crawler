@@ -3,14 +3,15 @@
 require 'mechanize'
 require 'csv'
 require 'cgi'
+require 'logger'
 require File.join(File.dirname(__FILE__), 'find_emails_for_sites.rb')
 
 class Search
 
   def initialize(filename)
     @terms = %w(Dock+Builders Marina Boat+Dock Dock+Pilings Marine+Contractor Yacht+Club Boat+Lift)
-    @states = %w(AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY)
-#    @states = %w(FL)
+#    @states = %w(AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY)
+    @states = %w(UT VT VA WA WV WI WY)
     @filename = filename
     @email_finder = FindEmailsForSites.new
   end
@@ -19,7 +20,7 @@ class Search
     puts "[yp searcher] Extracting data, saving to " + @filename
     CSV.open(@filename, 'w') {|f| f << %w(state_searched_with first_search_term company_name address locality zip state phone website where1 where2 where3 category1 category2 category3 email1 email2 email3 email4) }
     @states.each do |state|
-      agent = Mechanize.new
+      agent = Mechanize.new #{|a| a.log = Logger.new('mechanize_search.log')}
       already_saved = {}
       @terms.each do |term|
         url = "http://www.yellowpages.com/fl/boat-dock?g=#{state}&q=#{term}"
@@ -37,7 +38,7 @@ class Search
     begin      
       extract(page, already_saved, state, term)
       next_link = page.links.find { |l| l.text == 'Next' }
-      puts "[yp searcher] Extracting #{state} #{term} " + next_link.attributes['href'].match('.*(page=\d+).*')[1] if next_link
+      puts "[yp searcher] Will start extracting #{state} #{term} " + next_link.attributes['href'].match('.*(page=\d+).*')[1] if next_link
     end while next_link && page = safely{next_link.click}
   end
   
@@ -55,11 +56,13 @@ class Search
       business_neighborhoods = neighborhoods_or_default(l)
       website = extract_website(l)
       emails = @email_finder.spider_site_for_emails(website)
+      puts "[yp searcher] will save #{company_name}"
       CSV.open(@filename, 'a') do |csv|
         csv << [state_searched_with, first_search_term, company_name,
                 address, locality, zip, state, phone, website] + business_neighborhoods + categories + emails
       end
       already_saved[key] = true
+      puts "[yp searcher] done saving #{company_name}"
     end
   end
 
@@ -91,13 +94,7 @@ class Search
       yield
     rescue Exception => e
       if e.message =~ /connection was aborted/
-        begin
-          yield 
-        rescue Exception => e
-          puts " [yp searcher] Error on retry: #{e}. Continuing."
-        end
-      else
-        puts " [yp searcher] Error: #{e}. Continuing."
+        puts " [yp searcher] Error: #{e} #{e.message}. Continuing."
       end
     end
   end
